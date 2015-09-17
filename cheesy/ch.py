@@ -68,14 +68,14 @@ def _pull_all(command):
 	print u"\n\033[1m\033[1m\033[4m PACKAGES \033[0m\n"
 	if command == 'ls':
 		for li in l:
-			print u"\033[1m \u25E6 %s \033[0m - \033[93m%s \033[0m"%(li[0],li[4])
+			print u"\033[1m \u25E6 %s \033[0m   \033[93m%s \033[0m"%(li[0],li[4])
 	if command == 'list':
 		for li in l:
 			name = li[0] + "".join(" " for i in range(name_max-len(li[0])))
 			desc = li[1]
 			if len(li[1]) > 56:
 				desc = desc[:56] + " .."
-			print u"\033[1m \u25D8  %s \033[0m - \033[93m%s \033[0m"%(name,desc)
+			print u"\033[1m \u25D8  %s \033[0m   \033[93m%s \033[0m"%(name,desc)
 
 
 def _ascii_checker(name):
@@ -133,22 +133,26 @@ def _construct(PACKAGE,VERSION):
 	license = jsn['info']['license']
 	summary = jsn['info']['summary']
 	home_page = jsn['info']['home_page']
-	releases = jsn['releases'].keys()
+	releases = reversed(jsn['releases'].keys())
 	releases = ' | '.join(releases)[:56]
 	download_url = jsn['urls'][0]['url']
 	filename = jsn['urls'][0]['filename']
 	size = _sizeof_fmt(int(jsn['urls'][0]['size']))
 	
 	if VERSION:
-		_release_info(jsn,VERSION)
+
+		try:
+			_release_info(jsn,VERSION)
+		except IndexError:
+			print "\033[91m\033[1mError: Try the Command:\n\033[1m\033[0m\033[1m$ cheesy <PACKAGE> <VERSION>"
 		return None
 
 	print """
 	\n\033[1m\033[4mDESCRIPTION\n\n\033[0m\033[93m%s  \033[0m
 	
 	\033[1m\033[1m        \033[4mPACKAGE INFO\033[0m
-
-	\035[1m	package url          :\033[0m   \033[93m%s  \033[0m
+	\n
+	\033[1m	package url          :\033[0m   \033[93m%s  \033[0m
 	\033[1m	author name          :\033[0m   \033[93m%s  \033[0m
 	\033[1m	author email         :\033[0m   \033[93m%s  \033[0m
 	\033[1m	downloads last month :\033[0m   \033[93m%s  \033[0m

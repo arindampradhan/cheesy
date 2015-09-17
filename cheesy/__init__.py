@@ -1,6 +1,6 @@
-__version__ = "0.2.0"
+__version__ = "0.0.1"
 __author__='Arindam Pradhan'
 __author_email__='arindampradhan10@gmail.com'
 __maintainer__='Arindam Pradhan'
 __maintainer_email__='arindampradhan10@gmail.com'
-__url__='https://github.com/arindampradhan/learnpython'
+__url__='https://github.com/arindampradhan/cheesy'
