@@ -10,11 +10,12 @@ r"""
    ▀▀▀▀▀   ▀▀    ▀▀    ▀▀▀▀▀     ▀▀▀▀▀    ▀▀▀▀▀▀      ██    
                                                     ███     
           
-cheesy gives you the news for today's cheese pipy factory
+cheesy gives you the news for today's cheese shop pipy factory
 
 Usage:
   cheesy (ls | list)
-  cheesy [PACKAGE...]
+  cheesy <PACKAGE> 
+  cheesy <PACKAGE> <VERSION>
   cheesy (-h | --help)
   cheesy --version
 
@@ -31,11 +32,16 @@ import urlparse
 BASE_URL = "https://pypi.python.org/pypi"
 from docopt import docopt
 from pprint import pprint
+import cheesy
+__version__ = cheesy.__version__
 
-__version__ = "0.1.0"
+
+import logging
+logging.captureWarnings(True)
 
 
 def _pull_all(command):
+	"""Website scraper for the info from table content"""
 	page = requests.get(BASE_URL,verify=False)
 	soup = BeautifulSoup(page.text,"lxml")
 	table = soup.find('table',{'class':'list'})
@@ -59,24 +65,25 @@ def _pull_all(command):
 		li = (name,desc,link,date,version)
 		l.append(li)
 
+	print u"\n\033[1m\033[1m\033[4m PACKAGES \033[0m\n"
 	if command == 'ls':
 		for li in l:
-			print ">  %s - %s"%(li[0],li[4])
+			print u"\033[1m \u25E6 %s \033[0m - \033[93m%s \033[0m"%(li[0],li[4])
 	if command == 'list':
 		for li in l:
 			name = li[0] + "".join(" " for i in range(name_max-len(li[0])))
 			desc = li[1]
 			if len(li[1]) > 56:
 				desc = desc[:56] + " .."
-			print ">  %s - %s"%(name,desc)
+			print u"\033[1m \u25D8  %s \033[0m - \033[93m%s \033[0m"%(name,desc)
 
 
 def _ascii_checker(name):
 	return "".join([[ch," "][ord(ch) > 128] for ch in name ])
 
+
 def _get_info(package_name):
 	return requests.get("https://pypi.python.org/pypi/{}/json".format(package_name),verify=False).json()
-
 
 
 def _sizeof_fmt(num, suffix='B'):
@@ -87,8 +94,33 @@ def _sizeof_fmt(num, suffix='B'):
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
 
-# under info
-def _construct(PACKAGE):
+def _release_info(jsn,VERSION):
+	"""Gives information about a particular package version."""
+	try:
+		release_point = jsn['releases'][VERSION][0]
+	except KeyError:
+		print "\033[91m\033[1mError: Release not found."
+		exit(1)
+	python_version = release_point['python_version']
+	filename = release_point['filename']
+	md5 = release_point['md5_digest']
+	download_url_for_release = release_point['url']
+	download_num_for_release = release_point['downloads']
+	download_size_for_release = _sizeof_fmt(int(release_point['size']))
+	print """
+	\033[1m\033[1m        \033[4mPACKAGE VERSION INFO\033[0m
+
+	\033[1m	md5                  :\033[0m   \033[93m%s  \033[0m
+	\033[1m	python version       :\033[0m   \033[93m%s  \033[0m	
+	\033[1m	download url         :\033[0m   \033[93m%s  \033[0m	
+	\033[1m	download number      :\033[0m   \033[93m%s  \033[0m
+	\033[1m	size                 :\033[0m   \033[93m%s  \033[0m	
+	\033[1m	filename             :\033[0m   \033[93m%s  \033[0m	
+	"""%(md5,python_version,download_url_for_release,\
+	     download_num_for_release,download_size_for_release,filename)
+
+def _construct(PACKAGE,VERSION):
+	"""Construct the information part from the API."""
 	jsn  = _get_info(PACKAGE)
 	package_url = jsn['info']['package_url']
 	author = jsn['info']['author']
@@ -102,28 +134,50 @@ def _construct(PACKAGE):
 	summary = jsn['info']['summary']
 	home_page = jsn['info']['home_page']
 	releases = jsn['releases'].keys()
-	releases_version = "0.2.7" # will be given by input user
-	release_point = jsn['releases'][releases_version][0]
-	download_url_for_release = release_point['url']
-	download_num_for_release = release_point['downloads']
-	download_size_for_release = _sizeof_fmt(int(release_point['size']))
-	return dict(locals())
+	releases = ' | '.join(releases)[:56]
+	download_url = jsn['urls'][0]['url']
+	filename = jsn['urls'][0]['filename']
+	size = _sizeof_fmt(int(jsn['urls'][0]['size']))
+	
+	if VERSION:
+		_release_info(jsn,VERSION)
+		return None
+
+	print """
+	\n\033[1m\033[4mDESCRIPTION\n\n\033[0m\033[93m%s  \033[0m
+	
+	\033[1m\033[1m        \033[4mPACKAGE INFO\033[0m
+
+	\035[1m	package url          :\033[0m   \033[93m%s  \033[0m
+	\033[1m	author name          :\033[0m   \033[93m%s  \033[0m
+	\033[1m	author email         :\033[0m   \033[93m%s  \033[0m
+	\033[1m	downloads last month :\033[0m   \033[93m%s  \033[0m
+	\033[1m	downloads last week  :\033[0m   \033[93m%s  \033[0m
+	\033[1m	downloads last day   :\033[0m   \033[93m%s  \033[0m
+	\033[1m	homepage             :\033[0m   \033[93m%s  \033[0m
+	\033[1m	releases             :\033[0m   \033[93m%s  \033[0m	
+	\033[1m	download url         :\033[0m   \033[93m%s  \033[0m	
+	\033[1m	filename             :\033[0m   \033[93m%s  \033[0m	
+	\033[1m	size                 :\033[0m   \033[93m%s  \033[0m	
+	"""%(description,package_url,author,author_email,last_month,last_week,\
+	     last_day,home_page,releases,download_url,filename,size)
 
 
 def main():
     '''cheesy gives you the news for today's cheese pipy factory from command line'''
     arguments = docopt(__doc__, version=__version__)
-
     if arguments['ls']:
-        pprint(_pull_all('ls'))
+        _pull_all('ls')
     elif arguments['list']:
-        pprint(_pull_all('list'))
-    elif arguments['PACKAGE']:
-    	for package in arguments['PACKAGE']:
-    		try:
-        		pprint(_construct(package))
-        	except ValueError:
-        		print "Error: package not found try.. \n$ cheese ls \nto view pacakages"
+        _pull_all('list')
+    elif arguments['<PACKAGE>']:
+		try:
+			if arguments['<VERSION>']:
+				_construct(arguments['<PACKAGE>'],arguments['<VERSION>'])
+			else:
+				_construct(arguments['<PACKAGE>'],None)
+		except ValueError:
+			print "\033[91m\033[1mError: package not found try.. \033[0m\033[1m\n$ cheese ls \nto view pacakages"
     else:
         print(__doc__)
 
