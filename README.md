@@ -37,6 +37,8 @@ $ python setup.py install
 
 ## Usage
 
+[![asciicast](https://asciinema.org/a/44gy61ty9c9juzg50irg17re8.png)](https://asciinema.org/a/44gy61ty9c9juzg50irg17re8)
+
 ### Basic usage
 
 ```bash
