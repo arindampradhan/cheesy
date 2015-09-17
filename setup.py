@@ -9,7 +9,8 @@ except ImportError:
 
 setup(
     name='cheesy',
-    description='Terminal Based Python tutorials.',
+    description='cheesy gives you all the information for today\'s cheese shop pipy factory.',
+    long_description=open('README.md').read(),
     classifiers=[
         "Development Status :: 1 - Production/Stable",
         "Environment :: Console",
@@ -26,7 +27,7 @@ setup(
     maintainer=cheesy.__maintainer__,
     maintainer_email=cheesy.__maintainer_email__,
     url=cheesy.__url__,
-    download_url = 'https://github.com/arindampradhan/cheesy/tarball/0.0.1',
+    download_url = 'https://github.com/arindampradhan/cheesy/archive/v0.0.1.tar.gz',
     license='MIT',
     install_requires=[
         "requests",
