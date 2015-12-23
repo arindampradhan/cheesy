@@ -1,4 +1,4 @@
-![](./cheese.gif)
+![](https://raw.githubusercontent.com/arindampradhan/cheesy/master/cheese.gif)
 
 # **cheesy**
 
